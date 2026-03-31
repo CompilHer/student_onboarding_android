@@ -8,6 +8,13 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import com.example.studentonboarding.data.remote.dto.LoginData
 import com.example.studentonboarding.data.remote.dto.LoginRequest
+import com.example.studentonboarding.data.remote.dto.DocStatusData
+import com.example.studentonboarding.data.remote.dto.UploadResult
+import okhttp3.MediaType.Companion.toMediaTypeOrNull
+import okhttp3.MultipartBody
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
+import java.io.File
 
 class StudentRepositoryImpl {
 
@@ -67,6 +74,44 @@ class StudentRepositoryImpl {
                 }
             } catch (e: Exception) {
                 Resource.Error(e.localizedMessage ?: "Network connection failed")
+            }
+        }
+    }
+
+    suspend fun getDocumentStatus(): Resource<DocStatusData> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getDocumentStatus()
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Failed to fetch document status", response.error?.code)
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.localizedMessage ?: "Network connection failed")
+            }
+        }
+    }
+
+    suspend fun uploadDocument(file: File, docType: String, idempotencyKey: String): Resource<UploadResult> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // Convert the File into a MultipartBody.Part
+                val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
+
+                // Convert the docType string into a RequestBody
+                val docTypePart = docType.toRequestBody("text/plain".toMediaTypeOrNull())
+
+                val response = api.uploadDocument(filePart, docTypePart, idempotencyKey)
+
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Upload failed", response.error?.code)
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.localizedMessage ?: "Network connection failed during upload")
             }
         }
     }

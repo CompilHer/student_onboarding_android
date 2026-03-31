@@ -5,6 +5,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.studentonboarding.presentation.screens.login.LoginScreen
+import com.example.studentonboarding.presentation.screens.stage1_docs.Stage1DocsScreen
 
 @Composable
 fun OnboardingNavGraph(
@@ -28,12 +29,15 @@ fun OnboardingNavGraph(
             )
         }
 
-        // 2. Stage 1: Document Upload (We will build this UI next)
+        // 2. Stage 1: Document Upload
         composable(route = Screen.Stage1Docs.route) {
-            // Temporary placeholder until we build the real screen
-            androidx.compose.material3.Text(
-                text = "Welcome to Stage 1: Document Upload",
-                color = androidx.compose.ui.graphics.Color.White
+            Stage1DocsScreen(
+                onNavigateNext = {
+                    navController.navigate(Screen.Stage2Payment.route) {
+                        // Pop Stage 1 so they don't accidentally navigate backwards into it
+                        popUpTo(Screen.Stage1Docs.route) { inclusive = true }
+                    }
+                }
             )
         }
     }
