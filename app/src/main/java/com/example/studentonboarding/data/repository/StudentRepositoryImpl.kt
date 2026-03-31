@@ -1,5 +1,7 @@
 package com.example.studentonboarding.data.repository
 
+import retrofit2.HttpException
+import org.json.JSONObject
 import com.example.studentonboarding.data.remote.api.NetworkModule
 import com.example.studentonboarding.domain.model.AppState
 import com.example.studentonboarding.domain.model.Resource
@@ -18,6 +20,9 @@ import java.io.File
 import com.example.studentonboarding.data.remote.dto.OrderData
 import com.example.studentonboarding.data.remote.dto.PaymentStatusData
 import com.example.studentonboarding.data.remote.dto.VerifyPaymentRequest
+import com.example.studentonboarding.data.remote.dto.CourseListData
+import com.example.studentonboarding.data.remote.dto.CourseRegRequest
+import com.example.studentonboarding.data.remote.dto.AccommodationRequest
 
 class StudentRepositoryImpl {
 
@@ -55,8 +60,7 @@ class StudentRepositoryImpl {
                     Resource.Error(errorMsg, errorCode)
                 }
             } catch (e: Exception) {
-                // Catch network drops, timeouts, or JSON parsing crashes
-                Resource.Error(e.localizedMessage ?: "Network connection failed")
+                parseNetworkError(e)
             }
         }
     }
@@ -76,7 +80,7 @@ class StudentRepositoryImpl {
                     Resource.Error(response.error?.message ?: "Login failed", response.error?.code)
                 }
             } catch (e: Exception) {
-                Resource.Error(e.localizedMessage ?: "Network connection failed")
+                parseNetworkError(e)
             }
         }
     }
@@ -91,7 +95,7 @@ class StudentRepositoryImpl {
                     Resource.Error(response.error?.message ?: "Failed to fetch document status", response.error?.code)
                 }
             } catch (e: Exception) {
-                Resource.Error(e.localizedMessage ?: "Network connection failed")
+                parseNetworkError(e)
             }
         }
     }
@@ -116,7 +120,7 @@ class StudentRepositoryImpl {
                     Resource.Error(response.error?.message ?: "Upload failed", response.error?.code)
                 }
             } catch (e: Exception) {
-                Resource.Error(e.localizedMessage ?: "Network connection failed during upload")
+                parseNetworkError(e)
             }
         }
     }
@@ -131,7 +135,7 @@ class StudentRepositoryImpl {
                     Resource.Error(response.error?.message ?: "Failed to fetch payment status", response.error?.code)
                 }
             } catch (e: Exception) {
-                Resource.Error(e.localizedMessage ?: "Network connection failed")
+                parseNetworkError(e)
             }
         }
     }
@@ -146,7 +150,7 @@ class StudentRepositoryImpl {
                     Resource.Error(response.error?.message ?: "Failed to create order", response.error?.code)
                 }
             } catch (e: Exception) {
-                Resource.Error(e.localizedMessage ?: "Network connection failed")
+                parseNetworkError(e)
             }
         }
     }
@@ -162,8 +166,90 @@ class StudentRepositoryImpl {
                     Resource.Error(response.error?.message ?: "Payment verification failed", response.error?.code)
                 }
             } catch (e: Exception) {
-                Resource.Error(e.localizedMessage ?: "Network connection failed")
+                parseNetworkError(e)
             }
         }
+    }
+
+    suspend fun getCourses(): Resource<CourseListData> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getCourses()
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Failed to fetch courses", response.error?.code)
+                }
+            } catch (e: Exception) {
+                parseNetworkError(e)
+            }
+        }
+    }
+
+    suspend fun submitCourseRegistration(courseIds: List<String>, electiveIds: List<String>): Resource<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val request = CourseRegRequest(courseIds, electiveIds)
+                val response = api.submitCourseRegistration(request)
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Registration failed", response.error?.code)
+                }
+            } catch (e: Exception) {
+                parseNetworkError(e)
+            }
+        }
+    }
+
+    suspend fun getAccommodationStatus(): Resource<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getAccommodationStatus()
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Failed to fetch status", response.error?.code)
+                }
+            } catch (e: Exception) {
+                parseNetworkError(e)
+            }
+        }
+    }
+
+    suspend fun submitAccommodation(request: AccommodationRequest): Resource<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.submitAccommodation(request)
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Submission failed", response.error?.code)
+                }
+            } catch (e: Exception) {
+                parseNetworkError(e)
+            }
+        }
+    }
+
+    private fun parseNetworkError(e: Exception): Resource.Error {
+        if (e is HttpException) {
+            try {
+                // Extract the JSON string from the server's error response
+                val errorString = e.response()?.errorBody()?.string()
+                if (errorString != null) {
+                    val json = JSONObject(errorString)
+                    val errorObj = json.getJSONObject("error")
+                    return Resource.Error(
+                        message = errorObj.getString("message"), // The exact message from Node.js!
+                        code = errorObj.getString("code")
+                    )
+                }
+            } catch (parseEx: Exception) {
+                parseNetworkError(e)
+            }
+        }
+        // Fallback for no internet connection, timeouts, etc.
+        return Resource.Error(e.localizedMessage ?: "Network connection failed")
     }
 }
