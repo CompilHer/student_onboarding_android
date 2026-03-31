@@ -15,6 +15,9 @@ import okhttp3.MultipartBody
 import okhttp3.RequestBody.Companion.asRequestBody
 import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.File
+import com.example.studentonboarding.data.remote.dto.OrderData
+import com.example.studentonboarding.data.remote.dto.PaymentStatusData
+import com.example.studentonboarding.data.remote.dto.VerifyPaymentRequest
 
 class StudentRepositoryImpl {
 
@@ -96,12 +99,14 @@ class StudentRepositoryImpl {
     suspend fun uploadDocument(file: File, docType: String, idempotencyKey: String): Resource<UploadResult> {
         return withContext(Dispatchers.IO) {
             try {
-                // Convert the File into a MultipartBody.Part
-                val requestFile = file.asRequestBody("image/*".toMediaTypeOrNull())
+                // 1. Tell the Node.js backend this is explicitly a JPEG image
+                val requestFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
+
+                // 2. The field MUST be named "file" to match upload.single('file')
                 val filePart = MultipartBody.Part.createFormData("file", file.name, requestFile)
 
-                // Convert the docType string into a RequestBody
-                val docTypePart = docType.toRequestBody("text/plain".toMediaTypeOrNull())
+                // 3. Format the docType as clean Form Data to prevent Retrofit quote wrapping
+                val docTypePart = MultipartBody.Part.createFormData("doc_type", docType)
 
                 val response = api.uploadDocument(filePart, docTypePart, idempotencyKey)
 
@@ -112,6 +117,52 @@ class StudentRepositoryImpl {
                 }
             } catch (e: Exception) {
                 Resource.Error(e.localizedMessage ?: "Network connection failed during upload")
+            }
+        }
+    }
+
+    suspend fun getPaymentStatus(): Resource<PaymentStatusData> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getPaymentStatus()
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Failed to fetch payment status", response.error?.code)
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.localizedMessage ?: "Network connection failed")
+            }
+        }
+    }
+
+    suspend fun createPaymentOrder(): Resource<OrderData> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.createPaymentOrder()
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Failed to create order", response.error?.code)
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.localizedMessage ?: "Network connection failed")
+            }
+        }
+    }
+
+    suspend fun verifyPayment(orderId: String, paymentId: String, signature: String): Resource<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val request = VerifyPaymentRequest(orderId, paymentId, signature)
+                val response = api.verifyPayment(request)
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Payment verification failed", response.error?.code)
+                }
+            } catch (e: Exception) {
+                Resource.Error(e.localizedMessage ?: "Network connection failed")
             }
         }
     }

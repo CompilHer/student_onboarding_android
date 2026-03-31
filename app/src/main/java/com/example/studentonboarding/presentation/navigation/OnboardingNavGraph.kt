@@ -6,6 +6,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.studentonboarding.presentation.screens.login.LoginScreen
 import com.example.studentonboarding.presentation.screens.stage1_docs.Stage1DocsScreen
+import com.example.studentonboarding.presentation.screens.stage2_payment.Stage2PaymentScreen
 
 @Composable
 fun OnboardingNavGraph(
@@ -37,6 +38,15 @@ fun OnboardingNavGraph(
                         // Pop Stage 1 so they don't accidentally navigate backwards into it
                         popUpTo(Screen.Stage1Docs.route) { inclusive = true }
                     }
+                }
+            )
+        }
+
+        // 3. Stage 2: Fee Payment
+        composable(route = Screen.Stage2Payment.route) {
+            Stage2PaymentScreen(
+                onNavigateNext = {
+                    // We will route to Stage 3 later!
                 }
             )
         }

@@ -23,6 +23,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.studentonboarding.domain.model.Resource
 import com.example.studentonboarding.presentation.components.FsmProgressTracker
+import androidx.compose.foundation.layout.systemBarsPadding
 
 @Composable
 fun Stage1DocsScreen(
@@ -64,6 +65,7 @@ fun Stage1DocsScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(backgroundColor)
+            .systemBarsPadding()
     ) {
         // 1. The Persistent FSM Progress Tracker
         FsmProgressTracker(currentStage = 1)

@@ -63,27 +63,30 @@ class Stage1ViewModel : ViewModel() {
                 inputStream?.close()
                 outputStream.close()
 
+                // --- NEW: Check File Size Before Uploading ---
+                val fileSizeInBytes = tempFile.length()
+                val fileSizeInMB = fileSizeInBytes / (1024.0 * 1024.0)
+
+                if (fileSizeInMB > 10.0) {
+                    _uiMessage.value = "File is too large (${
+                        String.format(
+                            "%.1f",
+                            fileSizeInMB
+                        )
+                    } MB). Please select an image under 10MB."
+                    tempFile.delete() // Clean up the oversized file
+                    _uploadingDocType.value = null // Stop the loading spinner
+                    return@launch // Abort the upload process
+                }
+                // ---------------------------------------------
+
                 // 2. Generate the required Idempotency Key
                 val idempotencyKey = UUID.randomUUID().toString()
 
                 // 3. Send to Repository
                 val result = repository.uploadDocument(tempFile, docType, idempotencyKey)
 
-                when (result) {
-                    is Resource.Success -> {
-                        if (result.data.stageComplete) {
-                            _uiMessage.value = "Stage 1 Complete! Next stage unlocked."
-                        } else {
-                            _uiMessage.value = "$docType uploaded successfully."
-                        }
-                        // Refresh the list to show the new checkmarks
-                        fetchDocumentStatus()
-                    }
-                    is Resource.Error -> {
-                        _uiMessage.value = "Failed to upload $docType: ${result.message}"
-                    }
-                    else -> {}
-                }
+                // ... (Keep your existing when(result) block here) ...
 
                 // 4. Clean up the temp file to save space
                 tempFile.delete()

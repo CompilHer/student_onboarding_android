@@ -12,7 +12,7 @@ object NetworkModule {
     // the Android Emulator cannot reach it via "localhost".
     // You MUST use "10.0.2.2" which is the emulator's alias for your host machine.
     // If testing on a physical device, use your computer's actual IPv4 address on the same Wi-Fi network.
-    private const val BASE_URL = "http://10.0.2.2:3000/api/v1/"
+    private const val BASE_URL = "https://perspectively-postpuberty-carry.ngrok-free.dev/api/v1/"
 
     val authInterceptor = AuthInterceptor()
 

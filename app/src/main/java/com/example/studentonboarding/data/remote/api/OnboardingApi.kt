@@ -32,7 +32,7 @@ interface OnboardingApi {
     @POST("stages/1/upload")
     suspend fun uploadDocument(
         @Part file: MultipartBody.Part,
-        @Part("doc_type") docType: RequestBody,
+        @Part docType: MultipartBody.Part, // <-- Change this from RequestBody to MultipartBody.Part
         @Header("Idempotency-Key") idempotencyKey: String
     ): ApiResponse<UploadResult>
 

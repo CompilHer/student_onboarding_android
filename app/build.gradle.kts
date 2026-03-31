@@ -65,4 +65,7 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.3")
 
     implementation("androidx.navigation:navigation-compose:2.8.0")
+
+    // Razorpay SDK for Stage 2 Payment Integration
+    implementation("com.razorpay:checkout:1.6.38")
 }
