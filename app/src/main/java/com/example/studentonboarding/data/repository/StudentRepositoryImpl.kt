@@ -23,6 +23,7 @@ import com.example.studentonboarding.data.remote.dto.VerifyPaymentRequest
 import com.example.studentonboarding.data.remote.dto.CourseListData
 import com.example.studentonboarding.data.remote.dto.CourseRegRequest
 import com.example.studentonboarding.data.remote.dto.AccommodationRequest
+import com.example.studentonboarding.data.remote.dto.ComplianceRequest
 
 class StudentRepositoryImpl {
 
@@ -246,10 +247,151 @@ class StudentRepositoryImpl {
                     )
                 }
             } catch (parseEx: Exception) {
-                parseNetworkError(e)
+                return Resource.Error("Server Error ${e.code()}: ${e.message()}")
             }
         }
         // Fallback for no internet connection, timeouts, etc.
         return Resource.Error(e.localizedMessage ?: "Network connection failed")
+    }
+
+    suspend fun getItStatus(): Resource<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getItStatus()
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Failed to fetch IT status", response.error?.code)
+                }
+            } catch (e: Exception) {
+                parseNetworkError(e) // Using our new error parser!
+            }
+        }
+    }
+
+    suspend fun submitItSetup(): Resource<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.submitItSetup()
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "IT Setup failed", response.error?.code)
+                }
+            } catch (e: Exception) {
+                parseNetworkError(e)
+            }
+        }
+    }
+
+    suspend fun getComplianceStatus(): Resource<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getComplianceStatus()
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Failed to fetch status", response.error?.code)
+                }
+            } catch (e: Exception) {
+                parseNetworkError(e)
+            }
+        }
+    }
+
+    suspend fun submitCompliance(request: ComplianceRequest): Resource<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.submitCompliance(request)
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Submission failed", response.error?.code)
+                }
+            } catch (e: Exception) {
+                parseNetworkError(e)
+            }
+        }
+    }
+
+    suspend fun getIdCardStatus(): Resource<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getIdCardStatus()
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Failed to fetch ID Card status", response.error?.code)
+                }
+            } catch (e: Exception) {
+                parseNetworkError(e)
+            }
+        }
+    }
+
+    suspend fun generateIdCard(): Resource<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.generateIdCard()
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "ID Card generation failed", response.error?.code)
+                }
+            } catch (e: Exception) {
+                parseNetworkError(e)
+            }
+        }
+    }
+
+    suspend fun getReviewStatus(): Resource<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.getReviewStatus()
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Failed to fetch review status", response.error?.code)
+                }
+            } catch (e: Exception) {
+                parseNetworkError(e)
+            }
+        }
+    }
+
+    suspend fun submitFinalReview(): Resource<Map<String, Any>> {
+        return withContext(Dispatchers.IO) {
+            try {
+                val response = api.submitFinalReview()
+                if (response.success && response.data != null) {
+                    Resource.Success(response.data)
+                } else {
+                    Resource.Error(response.error?.message ?: "Final submission failed", response.error?.code)
+                }
+            } catch (e: Exception) {
+                parseNetworkError(e)
+            }
+        }
+    }
+
+    suspend fun sendChatMessage(message: String): Resource<String> {
+        return withContext(Dispatchers.IO) {
+            try {
+                // In the future, this will be: api.sendChatMessage(ChatRequest(message))
+                // For now, we simulate a 1-second network delay
+                kotlinx.coroutines.delay(1000)
+
+                // Simulated AI Responses based on keywords
+                val reply = when {
+                    message.lowercase().contains("hostel") -> "Hostel allocation is based on your Stage 4 logistics submission. Room numbers are assigned 1 week before the semester starts."
+                    message.lowercase().contains("fee") || message.lowercase().contains("pay") -> "You can view your payment receipt for the ₹50,000 tuition fee in your Student Dashboard."
+                    message.lowercase().contains("course") -> "You are currently enrolled in all mandatory core courses. Elective changes can be made during the first two weeks of the semester."
+                    else -> "I am your Campus AI Assistant. I have access to your enrollment profile. How can I help you today?"
+                }
+                Resource.Success(reply)
+            } catch (e: Exception) {
+                Resource.Error("AI Connection lost.")
+            }
+        }
     }
 }

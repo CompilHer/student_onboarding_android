@@ -46,15 +46,18 @@ data class StudentProfile(
     val gender: String?,
     @SerializedName("photo_url") val photoUrl: String?
 )
-
-// -- FSM State --------------------------------------------
 data class OnboardingState(
+    @SerializedName("current_stage", alternate = ["currentStage"])
     val currentStage: Int?,
+
+    @SerializedName("is_fully_enrolled", alternate = ["isFullyEnrolled"])
     val isFullyEnrolled: Boolean,
+
+    @SerializedName("enrolled_at", alternate = ["enrolledAt"])
     val enrolledAt: String?,
+
     val stages: List<StageInfo>
 )
-
 data class StageInfo(
     val stage: Int,
     val name: String,

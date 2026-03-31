@@ -18,27 +18,17 @@ import com.example.studentonboarding.domain.model.Resource
 
 @Composable
 fun LoadingScreen(
-    onNavigateToStage1: () -> Unit,
-    onNavigateToStage2: () -> Unit,
-    onNavigateToStage3: () -> Unit,
-    onNavigateToStage4: () -> Unit,
+    onNavigateToDashboard: () -> Unit, // Only one destination now!
     viewModel: LoadingViewModel = viewModel()
 ) {
     val appState by viewModel.appState.collectAsState()
     val backgroundColor = Color(0xFF121212)
     val accentColor = Color(0xFF00E5FF)
 
-    // Listen for the API response and route dynamically
+    // Listen for the API response and route to the dashboard
     LaunchedEffect(appState) {
         if (appState is Resource.Success) {
-            val stage = (appState as Resource.Success).data.currentStage
-            when (stage) {
-                1 -> onNavigateToStage1()
-                2 -> onNavigateToStage2()
-                3 -> onNavigateToStage3()
-                4 -> onNavigateToStage4()
-                else -> onNavigateToStage1() // Fallback
-            }
+            onNavigateToDashboard()
         }
     }
 
